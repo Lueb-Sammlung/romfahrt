@@ -55,6 +55,11 @@ main{flex:1;min-height:0;position:relative;background:var(--panel);border:1px so
 .unit.c6{stroke:var(--six)} .unit.c5{stroke:var(--five)}
 .unit.hot{stroke:#111;stroke-width:2.6;filter:drop-shadow(0 0 3px rgba(255,200,0,.95))}
 .unit.full{stroke-width:2}
+.unit.occ{stroke:#fff;stroke-width:.5}
+.unit.occ.part{stroke-dasharray:1.2 .8}
+.labels{pointer-events:none}
+.labels text{fill:#fff;text-anchor:middle;font-family:var(--f-label);font-weight:700;paint-order:stroke;stroke:rgba(0,0,0,.25);stroke-width:.25}
+.labels .ln{font-weight:600;opacity:.92}
 .unit.sel{stroke:#111;stroke-width:3;filter:drop-shadow(0 0 4px rgba(255,200,0,1)) drop-shadow(0 0 2px rgba(255,200,0,1))}
 .zoom{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;gap:4px;z-index:3}
 .zoom button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:700 18px var(--f-ui);cursor:pointer;box-shadow:var(--shadow)}
@@ -205,11 +210,38 @@ D.units.forEach(u=>{
   p.dataset.unit=u.id;
   svg.appendChild(p);polyEls[u.id]=p;
 });
+/* labels for occupied units: number + class, aligned with the unit's long side */
+const labelLayer=document.createElementNS(SVGNS,"g");labelLayer.setAttribute("class","labels");svg.appendChild(labelLayer);
+const GEO={};
+D.units.forEach(u=>{
+  const P=u.p,cx=P.reduce((a,q)=>a+q[0],0)/P.length,cy=P.reduce((a,q)=>a+q[1],0)/P.length;
+  const e1=[P[1][0]-P[0][0],P[1][1]-P[0][1]],e2=[P[2][0]-P[1][0],P[2][1]-P[1][1]];
+  const l1=Math.hypot(...e1),l2=Math.hypot(...e2);
+  const long=l1>=l2?e1:e2;let ang=Math.atan2(long[1],long[0])*180/Math.PI;
+  if(ang>90)ang-=180;if(ang<=-90)ang+=180;
+  if(Math.abs(Math.abs(ang)-90)<1)ang=-90; // vertical units read bottom-to-top like the map
+  GEO[u.id]={cx,cy,L:Math.max(l1,l2),S:Math.min(l1,l2),ang};
+});
+const clsShort=g=>G[g].cls==="Lehrkräfte"?"L":G[g].cls;
+function drawLabels(){
+  labelLayer.textContent="";
+  for(const id in state.u){
+    const occ=state.u[id];if(!occ||!UNITS[id])continue;
+    const names=[...new Set(Object.keys(occ).filter(g=>G[g]).map(clsShort))].join("/");
+    const g0=GEO[id],gEl=document.createElementNS(SVGNS,"g");
+    gEl.setAttribute("transform",`translate(${g0.cx.toFixed(2)} ${g0.cy.toFixed(2)}) rotate(${g0.ang.toFixed(1)})`);
+    const fit=(txt,max)=>Math.min(max,g0.L*0.9/(Math.max(txt.length,1)*0.6));
+    const f1=fit(id,g0.S*0.36),f2=fit(names,g0.S*0.46);
+    const t1=document.createElementNS(SVGNS,"text");t1.setAttribute("y",(-g0.S*0.1).toFixed(2));t1.setAttribute("font-size",f1.toFixed(2));t1.setAttribute("class","ln");t1.textContent=id;
+    const t2=document.createElementNS(SVGNS,"text");t2.setAttribute("y",(g0.S*0.36).toFixed(2));t2.setAttribute("font-size",f2.toFixed(2));t2.setAttribute("class","lc");t2.textContent=names;
+    gEl.append(t1,t2);labelLayer.appendChild(gEl);
+  }
+}
 let zoom=1;
 const baseW=()=>{const w=$("mapwrap");return Math.max(200,Math.min(w.clientWidth,w.clientHeight*D.w/D.h))};
 addEventListener("resize",()=>{$("mapinner").style.width=(baseW()*zoom)+"px"});
 function setZoom(z,cx,cy){
-  const w=$("mapwrap");const old=zoom;zoom=Math.max(1,Math.min(4,z));
+  const w=$("mapwrap");const old=zoom;zoom=Math.max(1,Math.min(6,z));
   const rx=(w.scrollLeft+(cx??w.clientWidth/2))/old, ry=(w.scrollTop+(cy??w.clientHeight/2))/old;
   $("mapinner").style.width=(baseW()*zoom)+"px";
   w.scrollLeft=rx*zoom-(cx??w.clientWidth/2); w.scrollTop=ry*zoom-(cy??w.clientHeight/2);
@@ -267,10 +299,12 @@ function render(){
     const n=used("u",id),c=UNITS[id].c,sx=[...sexesIn("u",id)];
     const p=polyEls[id];
     if(n===0){p.style.fill="transparent"}
-    else{const rgb=sx.length>1?"122,63,184":(sx[0]==="m"?"226,54,127":"31,91,198");p.style.fill=`rgba(${rgb},${n>=c?.8:.45})`}
+    else{const rgb=sx.length>1?"122,63,184":(sx[0]==="m"?"226,54,127":"31,91,198");p.style.fill=`rgba(${rgb},${n>=c?1:.82})`}
+    p.classList.toggle("occ",n>0);
     p.classList.toggle("full",n>=c);
     p.classList.toggle("sel",!!sel&&sel.kind==="u"&&sel.id===id);
   }
+  drawLabels();
   // buses
   for(const id in busEls){
     const b=BUSES[id],occ=state.b[id]||{},n=used("b",id);
