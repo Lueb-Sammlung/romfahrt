@@ -113,7 +113,7 @@ main{flex:1;min-height:0;position:relative;background:var(--panel);border:1px so
 .pop-panel .row .cnt{width:22px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
 .pop-panel .empty{color:var(--muted);padding:6px 0;border-top:1px solid var(--line)}
 .pop-panel .x{position:absolute;right:8px;top:6px;border:0;background:none;color:var(--muted);font-size:18px;cursor:pointer}
-.toast{position:fixed;left:50%;bottom:calc(200px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;z-index:70;box-shadow:var(--shadow)}
+.toast{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:7px 14px;border-radius:8px;font-size:13px;z-index:70;box-shadow:var(--shadow);pointer-events:none;max-width:calc(100vw - 32px);opacity:.94}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:13px}
 @media (max-width:700px){h1{font-size:18px}.legend{display:none}.chip{width:44px;height:44px}.chip .n{font-size:15px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -350,7 +350,7 @@ function drawBar(){
 $("selbar").addEventListener("click",e=>{
   const rm=e.target.closest?.("[data-rm]"),dec=e.target.closest?.("[data-dec]");
   if((rm||dec)&&sel&&!readOnly){const g=(rm||dec).dataset.rm||(rm||dec).dataset.dec,where=(sel.kind==="u"?"Bungalow ":"Bus ")+sel.id;
-    if(rm){removeAll(sel.kind,sel.id,g);toast(gName(G[g])+" aus "+where+" herausgenommen.")}else{adjust(sel.kind,sel.id,g,-1);toast("1 × "+gName(G[g])+" aus "+where+" herausgenommen.")}
+    if(rm)removeAll(sel.kind,sel.id,g);else adjust(sel.kind,sel.id,g,-1);
     confirmClear=false;render();return}
   const t=e.target.id;
   if(t==="cl"){confirmClear=true;drawBar()}
