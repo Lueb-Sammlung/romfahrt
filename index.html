@@ -135,8 +135,8 @@ main{flex:1;min-height:0;position:relative;background:var(--panel);border:1px so
     <span class="pdfs" id="pdfs-u"><button class="btn pdfb" id="pdf-units">Liste nach Bungalows <svg class="pdfi" viewBox="0 0 20 24" aria-hidden="true"><path d="M3 1h10l5 5v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="#fff" stroke="#c4161c" stroke-width="1.5"/><path d="M13 1v5h5" fill="none" stroke="#c4161c" stroke-width="1.5"/><rect x="0" y="12" width="16" height="8" rx="1.5" fill="#c4161c"/><text x="8" y="18.3" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="6.2" font-weight="700" fill="#fff">PDF</text></svg></button><button class="btn pdfb" id="pdf-classes">Liste nach Klasse <svg class="pdfi" viewBox="0 0 20 24" aria-hidden="true"><path d="M3 1h10l5 5v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="#fff" stroke="#c4161c" stroke-width="1.5"/><path d="M13 1v5h5" fill="none" stroke="#c4161c" stroke-width="1.5"/><rect x="0" y="12" width="16" height="8" rx="1.5" fill="#c4161c"/><text x="8" y="18.3" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="6.2" font-weight="700" fill="#fff">PDF</text></svg></button></span>
     <span class="pdfs" id="pdfs-b" hidden><button class="btn pdfb" id="pdf-bus">Busliste <svg class="pdfi" viewBox="0 0 20 24" aria-hidden="true"><path d="M3 1h10l5 5v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="#fff" stroke="#c4161c" stroke-width="1.5"/><path d="M13 1v5h5" fill="none" stroke="#c4161c" stroke-width="1.5"/><rect x="0" y="12" width="16" height="8" rx="1.5" fill="#c4161c"/><text x="8" y="18.3" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="6.2" font-weight="700" fill="#fff">PDF</text></svg></button></span>
     <button class="btn pdfb" id="xlsx">Excel-Liste <svg class="pdfi" viewBox="0 0 20 24" aria-hidden="true"><path d="M3 1h10l5 5v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="#fff" stroke="#1d6f42" stroke-width="1.5"/><path d="M13 1v5h5" fill="none" stroke="#1d6f42" stroke-width="1.5"/><rect x="0" y="12" width="16" height="8" rx="1.5" fill="#1d6f42"/><text x="8" y="18.3" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="6.2" font-weight="700" fill="#fff">XLS</text></svg></button>
-    <button class="btn" id="st-save">Stand speichern</button>
-    <button class="btn" id="st-load">Stand laden</button>
+    <button class="btn" id="st-save" hidden>Stand speichern</button>
+    <button class="btn" id="st-load" hidden>Stand laden</button>
     <input type="file" id="st-file" accept=".json,application/json" hidden>
     <span id="loadbox" hidden></span>
     <span id="resetbox"><button class="btn danger" id="reset">Zurücksetzen</button></span>
@@ -650,7 +650,7 @@ function setSave(t){$("save").textContent=t}
 function savedLabel(){return (readOnly?"Nur Ansicht":"Gespeichert")+" · Stand "+fmtAt(state.at)}
 function setReadOnly(on){
   readOnly=on;document.body.classList.toggle("ro",on);
-  ["st-load","resetbox"].forEach(id=>$(id).hidden=on);
+  $("resetbox").hidden=on;
   sel=null;picked=null;confirmClear=false;render();setSave(savedLabel());
 }
 function changed(){
