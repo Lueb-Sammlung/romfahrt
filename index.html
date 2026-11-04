@@ -234,11 +234,15 @@ function drawLabels(){
     const occ=state.u[id];if(!occ||!UNITS[id])continue;
     const names=[...new Set(Object.keys(occ).filter(g=>G[g]).map(clsShort))].join("/");
     const g0=GEO[id],gEl=document.createElementNS(SVGNS,"g");
-    gEl.setAttribute("transform",`translate(${g0.cx.toFixed(2)} ${g0.cy.toFixed(2)}) rotate(${g0.ang.toFixed(1)})`);
-    const fit=(txt,max)=>Math.min(max,g0.L*0.9/(Math.max(txt.length,1)*0.6));
-    const f1=fit(id,g0.S*0.36),f2=fit(names,g0.S*0.46);
-    const t1=document.createElementNS(SVGNS,"text");t1.setAttribute("y",(-g0.S*0.1).toFixed(2));t1.setAttribute("font-size",f1.toFixed(2));t1.setAttribute("class","ln");t1.textContent=id;
-    const t2=document.createElementNS(SVGNS,"text");t2.setAttribute("y",(g0.S*0.36).toFixed(2));t2.setAttribute("font-size",f2.toFixed(2));t2.setAttribute("class","lc");t2.textContent=names;
+    // always upright text: available width/height depend on how the unit lies
+    gEl.setAttribute("transform",`translate(${g0.cx.toFixed(2)} ${g0.cy.toFixed(2)})`);
+    const flat=Math.abs(g0.ang)<45,tilt=Math.min(Math.abs(g0.ang)%90,90-Math.abs(g0.ang)%90);
+    const W=(flat?g0.L:g0.S)*(tilt>4?0.72:1),H=flat?g0.S:g0.L;
+    const fit=(txt,max)=>Math.min(max,W*0.82/(Math.max(txt.length,1)*0.62));
+    const f1=fit(id,H*0.3),f2=fit(names,H*0.38);
+    const block=f1*0.85+f2*0.95,y1=-block/2+f1*0.8,y2=y1+f2*0.95+f1*0.1;
+    const t1=document.createElementNS(SVGNS,"text");t1.setAttribute("y",y1.toFixed(2));t1.setAttribute("font-size",f1.toFixed(2));t1.setAttribute("class","ln");t1.textContent=id;
+    const t2=document.createElementNS(SVGNS,"text");t2.setAttribute("y",y2.toFixed(2));t2.setAttribute("font-size",f2.toFixed(2));t2.setAttribute("class","lc");t2.textContent=names;
     gEl.append(t1,t2);labelLayer.appendChild(gEl);
   }
 }
