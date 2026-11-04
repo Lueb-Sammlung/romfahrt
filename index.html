@@ -68,6 +68,10 @@ main{flex:1;min-height:0;position:relative;background:var(--panel);border:1px so
 .bus .nr{font-family:var(--f-label);font-size:21px;line-height:1}
 .bus.med{border-color:#d40000;background:color-mix(in srgb,#d40000 5%,var(--panel))}
 .ddtag{display:inline-block;vertical-align:3px;margin-left:4px;font:700 10px var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:#1d2321;background:var(--accent);padding:2px 6px;border-radius:3px}
+.warn{font-size:12px;font-weight:600;color:#8a4b00;background:#fff1d6;border:1px solid #f0b54a;border-radius:6px;padding:3px 7px}
+.bus.warnbus{border-color:#f0b54a}
+.warn-s{color:#b4560a}
+.warn-s b{color:#b4560a}
 .medtag{display:inline-block;vertical-align:3px;margin-left:4px;font:700 10px var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:#fff;background:#d40000;padding:2px 6px;border-radius:3px}
 .bus .sub{font-size:12px;color:var(--muted)}
 .bar{height:6px;border-radius:3px;background:color-mix(in srgb,var(--muted) 20%,transparent);overflow:hidden;display:flex}
@@ -185,6 +189,9 @@ const used=(kind,id)=>sumObj(state[kind][id]);
 function placed(kind,gid){let s=0;for(const k in state[kind]){s+=(state[kind][k][gid]||0)}return s}
 const remaining=(kind,gid)=>G[gid].total-placed(kind,gid);
 function sexesIn(kind,id){return new Set(Object.keys(state[kind][id]||{}).map(g=>G[g]?.sex).filter(Boolean))}
+const teachersIn=id=>{const o=state.b[id]||{};return (o["Lehrkräfte_m"]||0)+(o["Lehrkräfte_j"]||0)};
+const busWarn=id=>used("b",id)>0&&teachersIn(id)<2; // occupied bus with fewer than 2 teachers
+const warnText=id=>{const k=teachersIn(id);return k===0?"Keine Lehrkraft im Bus":"Nur 1 Lehrkraft im Bus"};
 const colorOf=sex=>sex==="m"?"var(--girl)":"var(--boy)";
 
 /* ---------- build map ---------- */
@@ -270,7 +277,8 @@ function render(){
     const el=busEls[id];el.classList.toggle("med",b.note==="Krankenbus");el.classList.toggle("full",n>=b.seats);el.classList.toggle("hot",!!sel&&sel.kind==="b"&&sel.id===id);
     const segs=Object.entries(occ).map(([g,k])=>`<span style="width:${k/b.seats*100}%;background:${colorOf(G[g].sex)}"></span>`).join("");
     const pills=Object.entries(occ).map(([g,k])=>`<span class="pill" style="background:${colorOf(G[g].sex)}">${G[g].label} ${k}</span>`).join("");
-    el.innerHTML=`<div class="top">${b.note==="Krankenbus"?medIcon:b.seats>60?ddIcon:busIcon}<div><div class="nr">Bus ${id}${b.note==="Krankenbus"?' <span class="medtag">Krankenbus</span>':b.seats>60?' <span class="ddtag">Doppeldecker</span>':""}</div><div class="sub">${b.note&&b.note!=="Krankenbus"?b.note+" · ":""}${b.seats} Plätze · <b>${b.seats-n}</b> frei</div></div></div><div class="bar">${segs}</div><div class="occ">${pills}</div>`;
+    el.innerHTML=`<div class="top">${b.note==="Krankenbus"?medIcon:b.seats>60?ddIcon:busIcon}<div><div class="nr">Bus ${id}${b.note==="Krankenbus"?' <span class="medtag">Krankenbus</span>':b.seats>60?' <span class="ddtag">Doppeldecker</span>':""}</div><div class="sub">${b.note&&b.note!=="Krankenbus"?b.note+" · ":""}${b.seats} Plätze · <b>${b.seats-n}</b> frei</div></div></div><div class="bar">${segs}</div>${busWarn(id)?`<div class="warn">⚠ ${warnText(id)} – mindestens 2 nötig</div>`:""}<div class="occ">${pills}</div>`;
+    el.classList.toggle("warnbus",busWarn(id));
   }
   // stats
   if(mode==="u"){
@@ -279,7 +287,8 @@ function render(){
     $("stats").innerHTML=`<span>Untergebracht <b>${people}</b> / ${TOTAL}</span><span>Bungalows belegt <b>${usedUnits}</b> / ${D.units.length}</span><span>Betten frei <b>${BEDS-people}</b></span>`;
   }else{
     const people=GROUPS.reduce((a,g)=>a+placed("b",g.id),0);
-    $("stats").innerHTML=`<span>Im Bus <b>${people}</b> / ${TOTAL}</span><span>Plätze frei <b>${SEATS-people}</b> von ${SEATS}</span>`;
+    const nw=Object.keys(BUSES).filter(busWarn).length;
+    $("stats").innerHTML=`<span>Im Bus <b>${people}</b> / ${TOTAL}</span><span>Plätze frei <b>${SEATS-people}</b> von ${SEATS}</span>${nw?`<span class="warn-s">⚠ <b>${nw}</b> ${nw===1?"Bus":"Busse"} mit weniger als 2 Lehrkräften</span>`:""}`;
   }
   drawBar();
 }
@@ -340,7 +349,7 @@ function drawBar(){
   const sub=kind==="u"?`${UNITS[id].t} · ${c} Plätze`:`${BUSES[id].note?BUSES[id].note+" · ":""}${c} Plätze`;
   const pills=Object.entries(occ).map(([g,k])=>`<span class="pill grp-pill" style="background:${colorOf(G[g].sex)}">${gName(G[g])}: ${k}${readOnly?"":`<button class="pbtn" data-dec="${g}" title="Eine Person weniger" aria-label="Eine Person weniger">−</button><button class="pbtn" data-rm="${g}" title="Gruppe herausnehmen" aria-label="${gName(G[g])} herausnehmen">×</button>`}</span>`).join("");
   const free=c-n;
-  const status=free<=0?`<span class="full-tag">voll</span>`:`<span><b>${free}</b> frei${readOnly?"":" – jetzt einen Kreis anklicken"}</span>`;
+  const status=(free<=0?`<span class="full-tag">voll</span>`:`<span><b>${free}</b> frei${readOnly?"":" – jetzt einen Kreis anklicken"}</span>`)+(kind==="b"&&busWarn(id)?`<span class="warn">⚠ ${warnText(id)}</span>`:"");
   let action="";
   if(n>0&&!readOnly){action=confirmClear
     ?`<span class="confirm">${title} wirklich leeren? <button class="btn danger" id="cl-yes">Ja, leeren</button><button class="btn" id="cl-no">Abbrechen</button></span>`
@@ -478,6 +487,7 @@ function pdfBus(){
   const rows=[];
   ids.forEach(id=>{const b=BUSES[id],occ=state.b[id]||{},n=used("b",id);
     rows.push({group:`Bus ${id}${b.note?" ("+b.note+")":b.seats>60?" (Doppeldecker)":""}`,right:`${b.seats} Plätze · ${n} belegt · ${b.seats-n} frei`});
+    if(busWarn(id))rows.push({0:"",1:"Achtung: "+(teachersIn(id)===0?"keine Lehrkraft":"nur 1 Lehrkraft")+" (mind. 2)",2:"",color:"#b4560a",bold:true,length:3});
     const es=Object.entries(occ).sort((a,b)=>GROUPS.indexOf(G[a[0]])-GROUPS.indexOf(G[b[0]]));
     if(!es.length)rows.push(["","noch niemand zugeteilt",""]);
     es.forEach(([g,k])=>rows.push([clsWord(G[g]),sexWord(G[g]),String(k)]));
