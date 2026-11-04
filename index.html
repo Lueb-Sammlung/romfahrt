@@ -322,7 +322,7 @@ function onChip(gid){
   if(readOnly){toast("Nur zum Ansehen. Zum Verteilen bitte bei Claude anmelden.");return}
   if(!sel){if(remaining(mode,gid)<=0){toast(gName(G[gid])+" sind schon alle verteilt.");return}picked=picked===gid?null:gid;render();if(picked)toast(gName(G[gid])+" ausgewählt – jetzt "+(mode==="u"?"den Bungalow":"den Bus")+" anklicken.");return}
   if(remaining(sel.kind,gid)<=0){toast(gName(G[gid])+" sind schon alle verteilt.");return}
-  const k=assign(sel.kind,sel.id,gid);
+  const k=assign(sel.kind,sel.id,gid,G[gid].cls==="Lehrkräfte"?1:undefined); // teachers: one per click
   if(k>0){c.classList.remove("pop");void c.offsetWidth;c.classList.add("pop");setTimeout(()=>c.classList.remove("pop"),400);
     toast(`${k} × ${gName(G[gid])} → ${sel.kind==="u"?"Bungalow":"Bus"} ${sel.id}`)}
 }
