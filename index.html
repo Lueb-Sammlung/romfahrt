@@ -79,7 +79,10 @@ main{flex:1;min-height:0;position:relative;background:var(--panel);border:1px so
 .selbar .hint{color:var(--muted)}
 .selbar .selname{font:700 19px var(--f-label);background:var(--accent);color:#1d2321;padding:0 8px;border-radius:4px}
 .selbar .sub{color:var(--muted)}
-.selbar .occ{display:flex;flex-wrap:wrap;gap:4px}
+.selbar .occ{display:flex;flex-wrap:wrap;gap:6px}
+.grp-pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:2px 3px 2px 9px}
+.pbtn{border:0;background:rgba(255,255,255,.28);color:#fff;font:700 13px var(--f-ui);width:22px;height:22px;border-radius:50%;cursor:pointer;line-height:1;padding:0}
+.pbtn:hover{background:rgba(255,255,255,.5)}
 .selbar .full-tag{font-weight:700;color:var(--ok)}
 .tray{flex:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px 10px;overflow-x:auto;overflow-y:hidden;box-shadow:var(--shadow)}
 .groups{display:flex;gap:16px;width:max-content}
@@ -335,7 +338,7 @@ function drawBar(){
   const {kind,id}=sel,c=cap(kind,id),n=used(kind,id),occ=state[kind][id]||{};
   const title=kind==="u"?`Bungalow ${id}`:`Bus ${id}`;
   const sub=kind==="u"?`${UNITS[id].t} · ${c} Plätze`:`${BUSES[id].note?BUSES[id].note+" · ":""}${c} Plätze`;
-  const pills=Object.entries(occ).map(([g,k])=>`<span class="pill" style="background:${colorOf(G[g].sex)}">${gName(G[g])}: ${k}</span>`).join("");
+  const pills=Object.entries(occ).map(([g,k])=>`<span class="pill grp-pill" style="background:${colorOf(G[g].sex)}">${gName(G[g])}: ${k}${readOnly?"":`<button class="pbtn" data-dec="${g}" title="Eine Person weniger" aria-label="Eine Person weniger">−</button><button class="pbtn" data-rm="${g}" title="Gruppe herausnehmen" aria-label="${gName(G[g])} herausnehmen">×</button>`}</span>`).join("");
   const free=c-n;
   const status=free<=0?`<span class="full-tag">voll</span>`:`<span><b>${free}</b> frei${readOnly?"":" – jetzt einen Kreis anklicken"}</span>`;
   let action="";
@@ -345,6 +348,10 @@ function drawBar(){
   bar.innerHTML=`<span class="selname">${title}</span><span class="sub">${sub}</span>${status}<span class="occ">${pills}</span><span class="spacer"></span>${action}<button class="btn" id="desel" aria-label="Auswahl aufheben">Fertig</button>`;
 }
 $("selbar").addEventListener("click",e=>{
+  const rm=e.target.closest?.("[data-rm]"),dec=e.target.closest?.("[data-dec]");
+  if((rm||dec)&&sel&&!readOnly){const g=(rm||dec).dataset.rm||(rm||dec).dataset.dec,where=(sel.kind==="u"?"Bungalow ":"Bus ")+sel.id;
+    if(rm){removeAll(sel.kind,sel.id,g);toast(gName(G[g])+" aus "+where+" herausgenommen.")}else{adjust(sel.kind,sel.id,g,-1);toast("1 × "+gName(G[g])+" aus "+where+" herausgenommen.")}
+    confirmClear=false;render();return}
   const t=e.target.id;
   if(t==="cl"){confirmClear=true;drawBar()}
   else if(t==="cl-no"){confirmClear=false;drawBar()}
